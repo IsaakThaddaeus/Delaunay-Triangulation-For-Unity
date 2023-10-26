@@ -1,7 +1,7 @@
 # Delaunay-Triangulation-For-Unity
 (Unity-C#) 
 
-Provieds methodes for unconstrained and constrained Delaunay triangulation based on the work of S. W. Sloan.
+Provieds methodes for unconstrained and constrained Delaunay triangulation based on the papers of S. W. Sloan.
 
 References:
 
