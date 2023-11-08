@@ -205,7 +205,6 @@ public static class DelaunayTriangulator
         return triangles;
     }
 
-
     static int locateTriangle(Vector2 vertex, List<Vector2> vertices, List<Triangle> triangles, int numTri){
         int t = numTri;
 
