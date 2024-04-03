@@ -332,6 +332,7 @@ public static class DelaunayTriangulator
                     triangles[eA].adjacentTriangle[edg(eA, triangleX, triangles)] = triangleY;
                 }
 
+                
                 int intersectingEdge = getIntersection(triangleY, eC, intersectingEdges);
                 if (intersectingEdge != -1)
                 {
@@ -343,7 +344,7 @@ public static class DelaunayTriangulator
                 {
                     intersectingEdges[intersectingEdge] = new Vector2Int(triangleY, eA);
                 }
-
+                
 
                 if (doIntersect(verts[vB], verts[vD], verts[constraint.x], verts[constraint.y]))
                 {
@@ -358,6 +359,7 @@ public static class DelaunayTriangulator
                 z++;
             }
 
+            
             int i = 0;
             while (i < newEdges.Count)
             {
@@ -413,6 +415,7 @@ public static class DelaunayTriangulator
 
                 i++;
             }
+            
 
         }
     }
@@ -519,6 +522,8 @@ public static class DelaunayTriangulator
         int v1 = constraints.x;
         int v2 = constraints.y;
 
+        Debug.Log("goal: " + v1 + " " + v2);
+
         List<Vector2Int> intersectingEdges = new List<Vector2Int>();
 
         for (int i = 0; i < triangles.Count; i++) {
@@ -531,8 +536,7 @@ public static class DelaunayTriangulator
 
                     if (doIntersect(vertices[triangles[i].vertices[a]], vertices[triangles[i].vertices[b]], vertices[v1], vertices[v2]))
                     {
-                        Debug.Log("found");
-                        //intersectingEdges.Add(new Vector2Int(i, a));
+                        Debug.Log("found: " + triangles[i].vertices[a] + " " + triangles[i].vertices[b]);
                         intersectingEdges.Add(new Vector2Int(i, triangles[i].adjacentTriangle[a]));
                         break;
                     }
@@ -560,16 +564,39 @@ public static class DelaunayTriangulator
                     return intersectingEdges;
                 }
 
+                if (doIntersect(vertices[triangles[triangle].vertices[i]], vertices[triangles[triangle].vertices[j]], vertices[v1], vertices[v2]) && !edgeContained(intersectingEdges, triangle, triangles[triangle].adjacentTriangle[i]))
+                {
+                    Debug.Log("found: " + triangles[triangle].vertices[i] + " " + triangles[triangle].vertices[j]);
+                    intersectingEdges.Add(new Vector2Int(triangle, triangles[triangle].adjacentTriangle[i]));
+                    triangle = triangles[triangle].adjacentTriangle[i];
+                    break;
+                }
+
+
+                /*
                 if (orientation(vertices[triangles[triangle].vertices[i]], vertices[triangles[triangle].vertices[j]], vertices[v2]) == 1)
                 {
-                    Debug.Log("found");
+                    Debug.Log("found: " + triangles[triangle].vertices[i] + " " + triangles[triangle].vertices[j]);
                     intersectingEdges.Add(new Vector2Int(triangle, triangles[triangle].adjacentTriangle[i]));
                     triangle = triangles[triangle].adjacentTriangle[i];
                 }
+                */
             }
         }
 
 
+    }
+    static bool edgeContained(List<Vector2Int> intersectionEdges, int t1, int t2)
+    {
+        foreach(Vector2Int edge in intersectionEdges)
+        {
+            if (edge.x == t1 && edge.y == t2 || edge.x == t2 && edge.y == t1)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
     static public bool doIntersect(Vector2 p1, Vector2 q1, Vector2 p2, Vector2 q2){
         // See https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
@@ -592,9 +619,8 @@ public static class DelaunayTriangulator
 
         return false;
     }
-    static int orientation(Vector2 p, Vector2 q, Vector2 r){
-        float val = (q.y - p.y) * (r.x - q.x) -
-                    (q.x - p.x) * (r.y - q.y);
+    public static int orientation(Vector2 p, Vector2 q, Vector2 r){
+        float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
 
         if (val == 0) return 0; // collinear
 
