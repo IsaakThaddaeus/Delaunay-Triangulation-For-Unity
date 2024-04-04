@@ -222,6 +222,7 @@ public static class DelaunayTriangulator
         return t;
     }
     static int edg(int l, int k, List<Triangle> triangles){
+    //Find the edge of triangle l wguch is adjacent to triangle k
         for(int i = 0; i < 3; i++){
            if(k == triangles[l].adjacentTriangle[i]){
                 return i;
@@ -336,12 +337,15 @@ public static class DelaunayTriangulator
                 int intersectingEdge = getIntersection(triangleY, eC, intersectingEdges);
                 if (intersectingEdge != -1)
                 {
+                    Debug.Log("GetIntersection A");
                     intersectingEdges[intersectingEdge] = new Vector2Int(triangleX, eC);
                 }
+
 
                 intersectingEdge = getIntersection(triangleX, eA, intersectingEdges);
                 if (intersectingEdge != -1)
                 {
+                    Debug.Log("GetIntersection B");
                     intersectingEdges[intersectingEdge] = new Vector2Int(triangleY, eA);
                 }
                 
