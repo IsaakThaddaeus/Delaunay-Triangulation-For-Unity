@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI.MessageBox;
 
 public class Tester : MonoBehaviour
 {
@@ -10,11 +11,23 @@ public class Tester : MonoBehaviour
     List<Triangle> trianglesWC;
     List<Triangle> triangles;
     public bool run = false;
+    public bool remove = false;
 
+    private void Start()
+    {
+        vertices.Clear();
 
-    public int a;
-    public int b;
-    public int c;
+        for (int i = 0; i < 500; i++)
+        {
+            Vector2 randomVector = new Vector2(Random.Range(0f, 50f), Random.Range(0f, 50f));
+            
+            if(!vertices.Contains(randomVector))
+            {
+                vertices.Add(randomVector);
+            }
+
+        }
+    }
 
     void Update()
     {
@@ -22,21 +35,22 @@ public class Tester : MonoBehaviour
         {
             //run = false;
 
-            trianglesWC = DelaunayTriangulator.triangulateWithConstraints(false, vertices, constraints);
+            trianglesWC = DelaunayTriangulator.triangulateWithConstraints(remove, vertices, constraints);
          
         }
     }
 
     private void OnDrawGizmos()
     {
-        Debug.Log(DelaunayTriangulator.orientation(vertices[a], vertices[b], vertices[c]));
 
         if (vertices != null)
         {
             Gizmos.color = Color.red;
-            foreach (Vector2 v in vertices)
+
+            for(int i = 0; i < vertices.Count; i++)
             {
-                Gizmos.DrawSphere(v, 0.1f);
+                Gizmos.DrawSphere(vertices[i], 0.1f);
+                //Handles.Label(vertices[i] + new Vector2(0.3f, 0f), i.ToString());
             }
         }
 
@@ -84,7 +98,15 @@ public class Tester : MonoBehaviour
 
         }
 
-        if(trianglesWC != null)
+
+        foreach (Vector2Int c in constraints)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(vertices[c.x], vertices[c.y]);
+        }
+
+
+        if (trianglesWC != null)
         {
             Gizmos.color = Color.yellow;
             foreach (Triangle t in trianglesWC)
@@ -97,11 +119,6 @@ public class Tester : MonoBehaviour
 
         }
 
-        foreach (Vector2Int c in constraints)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(vertices[c.x], vertices[c.y]);
-        }
 
 
     }

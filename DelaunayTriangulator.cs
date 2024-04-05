@@ -280,6 +280,7 @@ public static class DelaunayTriangulator
               //  Debug.Log("Already in Triangulation");
                 continue;
             }
+
             List<Vector2Int> intersectingEdges = getIntersectingEdges(triangles, verts, constraint);
             List<Vector2Int> newEdges = new List<Vector2Int>();
 
@@ -352,7 +353,6 @@ public static class DelaunayTriangulator
 
             
             
-            
             for(int i = 0; i < newEdges.Count; i++)
             {
 
@@ -418,43 +418,29 @@ public static class DelaunayTriangulator
 
         for (int i = 0; i < triangles.Count; i++)
         {
-            for (int j = 0; j < 3; j++)
+            Vector2 v1 = verts[triangles[i].vertices[0]];
+            Vector2 v2 = verts[triangles[i].vertices[1]];
+            Vector2 v3 = verts[triangles[i].vertices[2]];
+
+            Vector2 center = (v1 + v2 + v3) / 3;
+            Vector2 end = center + new Vector2(10000, 222);
+
+            int intersections = 0;
+
+            foreach (Vector2Int constraint in constraints)
             {
-                int v1Index = triangles[i].vertices[j];
-                int v2Index = triangles[i].vertices[(j + 1) % 3];
-                Vector2 v1 = verts[v1Index];
-                Vector2 v2 = verts[v2Index];
-                Vector2Int edge = new Vector2Int(v1Index, v2Index);
+                Vector2 c1 = verts[constraint.x];
+                Vector2 c2 = verts[constraint.y];
 
-                if (edgeIsEqualToConstraint(constraints, edge)) {
-                  //  Debug.Log("inside");
-                    continue;
-                }
-
-                Vector2 center = (v1 + v2) / 2;
-                //Do intersect not correct enough
-                Vector2 end = center + new Vector2(10000, 222);
-
-
-                int intersections = 0;
-
-                foreach (Vector2Int constraint in constraints)
+                if (doIntersect(center, end, c1, c2))
                 {
-                    Vector2 c1 = verts[constraint.x];
-                    Vector2 c2 = verts[constraint.y];
-
-                    if (doIntersect(center, end, c1, c2))
-                    {
-                        intersections++;
-                    }
+                    intersections++;
                 }
+            }
 
-                if (intersections % 2 != 0)
-                {
-                    triangles[i].inside = true;
-                }
-
-                break;
+            if (intersections % 2 != 0)
+            {
+                triangles[i].inside = true;
             }
         }
     }
