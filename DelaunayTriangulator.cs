@@ -514,7 +514,6 @@ public static class DelaunayTriangulator
 
         triangles.RemoveRange(numTRI + 1, triangles.Count - numTRI - 1);
     }
-
     static List<Vector2Int> getIntersectingEdges(List<Triangle> triangles, List<Vector2> vertices, Vector2Int constraint)
     {
         List<Vector2Int> intersectingEdges = new List<Vector2Int>();
