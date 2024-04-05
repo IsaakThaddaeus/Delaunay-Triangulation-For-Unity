@@ -200,7 +200,7 @@ public static class DelaunayTriangulator
 
 
         double timeD1 = Time.realtimeSinceStartupAsDouble;
-        Debug.Log("Elapsed Time: " +  (timeD1 - timeD0) + " D0: " + timeD0 + " D1: " + timeD1);
+        Debug.LogWarning("Elapsed Time: " +  (timeD1 - timeD0) + " D0: " + timeD0 + " D1: " + timeD1);
 
         return triangles;
     }
@@ -276,17 +276,20 @@ public static class DelaunayTriangulator
     {
         foreach (Vector2Int constraint in constraints)
         {
-            if (edgeIsAlreadyInTriangulation(constraint, triangles)) { Debug.Log("Already in Triangulation"); continue; }
+            if (edgeIsAlreadyInTriangulation(constraint, triangles)) {
+              //  Debug.Log("Already in Triangulation");
+                continue;
+            }
             List<Vector2Int> intersectingEdges = getIntersectingEdges(triangles, verts, constraint);
             List<Vector2Int> newEdges = new List<Vector2Int>();
 
             int z = 0;
-            while (intersectingEdges.Count > 0 && z < 1000)
+            while (intersectingEdges.Count > 0 && z < 10000)
             {
                 Vector2Int edge = intersectingEdges[0]; intersectingEdges.RemoveAt(0);
 
-                int triangleX = edge.x;
-                int triangleY = edge.y;
+                int triangleX = getTriangleByEdgeVertices(edge.x, edge.y, triangles);
+                int triangleY = getTriangleByEdgeVertices(edge.y, edge.x, triangles);
 
                 int edgeX = edg(triangleX, triangleY, triangles);
                 int edgeY = edg(triangleY, triangleX, triangles);
@@ -303,7 +306,7 @@ public static class DelaunayTriangulator
 
                 if (!isConvexQuadrilateral(verts[vA], verts[vB], verts[vC], verts[vD]))
                 {
-                    intersectingEdges.Add(new Vector2Int(triangleX, triangleY));
+                    intersectingEdges.Add(new Vector2Int(vA, vC));
                     z++;
                     continue;
                 }
@@ -333,43 +336,28 @@ public static class DelaunayTriangulator
                     triangles[eA].adjacentTriangle[edg(eA, triangleX, triangles)] = triangleY;
                 }
 
-                
-                int intersectingEdge = getIntersection(triangleY, eC, intersectingEdges);
-                if (intersectingEdge != -1)
-                {
-                    Debug.Log("GetIntersection A");
-                    intersectingEdges[intersectingEdge] = new Vector2Int(triangleX, eC);
-                }
-
-
-                intersectingEdge = getIntersection(triangleX, eA, intersectingEdges);
-                if (intersectingEdge != -1)
-                {
-                    Debug.Log("GetIntersection B");
-                    intersectingEdges[intersectingEdge] = new Vector2Int(triangleY, eA);
-                }
-                
 
                 if (doIntersect(verts[vB], verts[vD], verts[constraint.x], verts[constraint.y]))
                 {
-                    intersectingEdges.Add(new Vector2Int(triangleX, triangleY));
+                    intersectingEdges.Add(new Vector2Int(vB, vD));
                 }
 
                 else
                 {
-                    newEdges.Add(new Vector2Int(triangleX, triangleY));
+                    newEdges.Add(new Vector2Int(vB, vD));
                 }
 
                 z++;
             }
 
             
-            int i = 0;
-            while (i < newEdges.Count)
+            
+            
+            for(int i = 0; i < newEdges.Count; i++)
             {
 
-                int triangleX = newEdges[i].x;
-                int triangleY = newEdges[i].y;
+                int triangleX = getTriangleByEdgeVertices(newEdges[i].x, newEdges[i].y, triangles);
+                int triangleY = getTriangleByEdgeVertices(newEdges[i].y, newEdges[i].x, triangles);
 
                 int edgeX = edg(triangleX, triangleY, triangles);
                 int edgeY = edg(triangleY, triangleX, triangles);
@@ -384,12 +372,15 @@ public static class DelaunayTriangulator
                 int eC = triangles[triangleY].adjacentTriangle[(edgeY + 1) % 3];
                 int eD = triangles[triangleY].adjacentTriangle[(edgeY + 2) % 3];
 
-                if (edgeIsAlreadyInTriangulation(new Vector2Int(vA, vC), triangles)) { Debug.Log("Already in Triangulation"); i++; continue; };
+                if (edgeIsEqualToConstraint(constraints, new Vector2Int(newEdges[i].x, newEdges[i].y))) { 
+                   // Debug.Log("Already in Triangulation");
+                    continue;
+                };
 
                 if (swap(verts[vA], verts[vC], verts[vD], verts[vB]))
                 {
 
-                    Debug.Log("Swapped");
+                 //   Debug.Log("Swapped");
 
                     triangles[triangleX].vertices[0] = vD;
                     triangles[triangleX].vertices[1] = vB;
@@ -416,9 +407,8 @@ public static class DelaunayTriangulator
                         triangles[eA].adjacentTriangle[edg(eA, triangleX, triangles)] = triangleY;
                     }
                 }
-
-                i++;
             }
+            
             
 
         }
@@ -436,7 +426,10 @@ public static class DelaunayTriangulator
                 Vector2 v2 = verts[v2Index];
                 Vector2Int edge = new Vector2Int(v1Index, v2Index);
 
-                if (edgeIsEqualToConstraint(constraints, edge)) { Debug.Log("inside"); continue; }
+                if (edgeIsEqualToConstraint(constraints, edge)) {
+                  //  Debug.Log("inside");
+                    continue;
+                }
 
                 Vector2 center = (v1 + v2) / 2;
                 //Do intersect not correct enough
@@ -522,74 +515,95 @@ public static class DelaunayTriangulator
         triangles.RemoveRange(numTRI + 1, triangles.Count - numTRI - 1);
     }
 
-    static List<Vector2Int> getIntersectingEdges(List<Triangle> triangles, List<Vector2> vertices, Vector2Int constraints) {
-        int v1 = constraints.x;
-        int v2 = constraints.y;
-
-        Debug.Log("goal: " + v1 + " " + v2);
-
+    static List<Vector2Int> getIntersectingEdges(List<Triangle> triangles, List<Vector2> vertices, Vector2Int constraint)
+    {
         List<Vector2Int> intersectingEdges = new List<Vector2Int>();
 
-        for (int i = 0; i < triangles.Count; i++) {
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                int v1 = triangles[i].vertices[j];
+                int v2 = triangles[i].vertices[(j + 1) % 3];
 
-            int index = Array.IndexOf(triangles[i].vertices, v1);
-            if (index != -1) {
+                if (doIntersect(vertices[v1], vertices[v2], vertices[constraint.x], vertices[constraint.y]) && !edgeContained(intersectingEdges, v1, v2))
                 {
-                    int a = (index + 1) % 3;
-                    int b = (index + 2) % 3;
+                    intersectingEdges.Add(new Vector2Int(v1, v2));
+                }
+            }
+        }
 
-                    if (doIntersect(vertices[triangles[i].vertices[a]], vertices[triangles[i].vertices[b]], vertices[v1], vertices[v2]))
+        return intersectingEdges;
+    }
+   
+    /*
+        static List<Vector2Int> getIntersectingEdges(List<Triangle> triangles, List<Vector2> vertices, Vector2Int constraints) {
+            int v1 = constraints.x;
+            int v2 = constraints.y;
+            int triangle = 0;
+            Debug.Log("goal: " + v1 + " " + v2);
+
+            List<Vector2Int> intersectingEdges = new List<Vector2Int>();
+
+            for (int i = 0; i < triangles.Count; i++) {
+
+                int index = Array.IndexOf(triangles[i].vertices, v1);
+                if (index != -1) {
                     {
-                        Debug.Log("found: " + triangles[i].vertices[a] + " " + triangles[i].vertices[b]);
-                        intersectingEdges.Add(new Vector2Int(i, triangles[i].adjacentTriangle[a]));
+                        int a = (index + 1) % 3;
+                        int b = (index + 2) % 3;
+
+                        if (doIntersect(vertices[triangles[i].vertices[a]], vertices[triangles[i].vertices[b]], vertices[v1], vertices[v2]))
+                        {
+                            Debug.Log("found: " + triangles[i].vertices[a] + " " + triangles[i].vertices[b]);
+                            intersectingEdges.Add(new Vector2Int(triangles[i].vertices[a], triangles[i].vertices[b]));
+                            triangle = triangles[i].adjacentTriangle[a];
+                            break;
+                        }
+                    }
+                }
+            }
+
+
+
+            int z = 0;
+            while(z < 10000 )
+            {
+                for (int i = 0; i < 3; i++) {
+                    int j = (i + 1) % 3;
+
+                    if (triangles[triangle].vertices[i] == v2)
+                    {
+                        Debug.Log("end");
+
+                        foreach (Vector2Int edge in intersectingEdges)
+                        {
+                            Debug.Log("intersecting edge " + edge);
+                        }
+
+                        return intersectingEdges;
+                    }
+
+                    if (doIntersect(vertices[triangles[triangle].vertices[i]], vertices[triangles[triangle].vertices[j]], vertices[v1], vertices[v2]) && !edgeContained(intersectingEdges, triangles[triangle].vertices[i], triangles[triangle].vertices[j]))
+                    {
+                        Debug.Log("found: " + triangles[triangle].vertices[i] + " " + triangles[triangle].vertices[j]);
+                        intersectingEdges.Add(new Vector2Int(triangles[triangle].vertices[i], triangles[triangle].vertices[j]));
+                        triangle = triangles[triangle].adjacentTriangle[i];
                         break;
                     }
                 }
+
+                z++;
             }
-        }
 
-
-        int triangle = intersectingEdges[0].y;
-
-        while(true)
-        {
-            for (int i = 0; i < 3; i++) {
-                int j = (i + 1) % 3;
-
-                if (triangles[triangle].vertices[i] == v2)
-                {
-                    Debug.Log("end");
-
-                    foreach (Vector2Int edge in intersectingEdges)
-                    {
-                        Debug.Log("intersecting edge " + edge);
-                    }
-
-                    return intersectingEdges;
-                }
-
-                if (doIntersect(vertices[triangles[triangle].vertices[i]], vertices[triangles[triangle].vertices[j]], vertices[v1], vertices[v2]) && !edgeContained(intersectingEdges, triangle, triangles[triangle].adjacentTriangle[i]))
-                {
-                    Debug.Log("found: " + triangles[triangle].vertices[i] + " " + triangles[triangle].vertices[j]);
-                    intersectingEdges.Add(new Vector2Int(triangle, triangles[triangle].adjacentTriangle[i]));
-                    triangle = triangles[triangle].adjacentTriangle[i];
-                    break;
-                }
-
-
-                /*
-                if (orientation(vertices[triangles[triangle].vertices[i]], vertices[triangles[triangle].vertices[j]], vertices[v2]) == 1)
-                {
-                    Debug.Log("found: " + triangles[triangle].vertices[i] + " " + triangles[triangle].vertices[j]);
-                    intersectingEdges.Add(new Vector2Int(triangle, triangles[triangle].adjacentTriangle[i]));
-                    triangle = triangles[triangle].adjacentTriangle[i];
-                }
-                */
+            if (z == 10000)
+            {
+                Debug.LogError("----------------------------------Error----------------------------");
             }
+            return null;
         }
+        */
 
-
-    }
     static bool edgeContained(List<Vector2Int> intersectionEdges, int t1, int t2)
     {
         foreach(Vector2Int edge in intersectionEdges)
@@ -640,11 +654,16 @@ public static class DelaunayTriangulator
 
         return false;
     }
-    static int getIntersection(int x, int c, List<Vector2Int> intersectingEdges)
+    static int getTriangleByEdgeVertices(int a, int b, List<Triangle> triangles)
     {
-        for(int i = 0; i < intersectingEdges.Count; i++){
-            if (intersectingEdges[i].x == x && intersectingEdges[i].y == c || intersectingEdges[i].x == c && intersectingEdges[i].y == x){
-                return i;
+        for (int i = 0; i < triangles.Count; ++i)
+{
+            for(int j = 0; j < 3; j++)
+            {
+                if (triangles[i].vertices[j] == a && triangles[i].vertices[(j + 1) % 3] == b)
+                {
+                    return i;
+                }
             }
         }
 
