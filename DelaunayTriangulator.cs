@@ -26,8 +26,9 @@ public static class DelaunayTriangulator
         superTriangle.adjacentTriangle[2] = -1;
 
         vertices.Add(new Vector2(-100, -100));
+        vertices.Add(new Vector2(0, 100));
         vertices.Add(new Vector2( 100, -100));
-        vertices.Add(new Vector2(   0,  100));
+        
 
 
         int numTRI = 0;
@@ -96,7 +97,7 @@ public static class DelaunayTriangulator
                 v2 = triangles[r].vertices[era];
                 v3 = triangles[r].vertices[erb];
 
-                if (swap(vertices[v1], vertices[v2], vertices[v3], vertices[i]) == true){
+                if (swap(vertices[v2], vertices[v1], vertices[v3], vertices[i]) == true){
 
                     a = triangles[r].adjacentTriangle[era];
                     b = triangles[r].adjacentTriangle[erb];
@@ -213,7 +214,7 @@ public static class DelaunayTriangulator
             int v1 = triangles[t].vertices[i];
             int v2 = triangles[t].vertices[(i + 1) % 3];
 
-            if ( ((vertices[v1].y - vertex.y) * (vertices[v2].x - vertex.x)) > ((vertices[v1].x - vertex.x) * (vertices[v2].y - vertex.y)) ){
+            if ( ((vertices[v1].y - vertex.y) * (vertices[v2].x - vertex.x)) < ((vertices[v1].x - vertex.x) * (vertices[v2].y - vertex.y)) ){
                 t = triangles[t].adjacentTriangle[i];
                 goto loop;
             }
@@ -377,7 +378,7 @@ public static class DelaunayTriangulator
                     continue;
                 };
 
-                if (swap(verts[vA], verts[vC], verts[vD], verts[vB]))
+                if (swap(verts[vC], verts[vA], verts[vD], verts[vB]))
                 {
 
                  //   Debug.Log("Swapped");
